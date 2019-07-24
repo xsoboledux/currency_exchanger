@@ -7,9 +7,12 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.List;
 
+import ru.xsobolx.currencyexchange.domain.CurrencyExchanger;
 import ru.xsobolx.currencyexchange.domain.GetCurrencies;
 import ru.xsobolx.currencyexchange.domain.model.Currency;
 import ru.xsobolx.currencyexchange.repository.CurrencyRepository;
@@ -25,6 +28,7 @@ public class CurrencyPresenterTest {
     private CurrencyMvpView view;
     @Mock
     private CurrencyRepository currencyRepository;
+    private CurrencyExchanger currencyExchanger;
 
     private GetCurrencies getCurrencies;
 
@@ -37,8 +41,9 @@ public class CurrencyPresenterTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
+        currencyExchanger = new CurrencyExchanger();
         getCurrencies = new GetCurrencies(currencyRepository);
-        presenter = new CurrencyPresenter(getCurrencies, view);
+        presenter = new CurrencyPresenter(getCurrencies, currencyExchanger, view);
     }
 
     @Test
@@ -89,26 +94,30 @@ public class CurrencyPresenterTest {
     }
 
     @Test
-    public void shouldShowCourseOnCurrenciesSelected() {
+    public void testCalculateValue() {
         presenter.onAttach();
+        int fromCurrencyPosition = 1;
+        int toCurrencyPosition = 2;
 
         // set currencies
         verify(currencyRepository).getCurrencies(currenciesCallbackArgumentCaptor.capture());
         currenciesCallbackArgumentCaptor.getValue().onCurrenciesLoaded(TestCurrencies.getCurrencies());
 
         // select currencies
-        presenter.onTopCurrencySelected(1);
-        presenter.onBottomCurrencySelected(2);
+        presenter.onFromCurrencySelected(fromCurrencyPosition);
+        presenter.onToCurrencySelected(toCurrencyPosition);
+        presenter.onAmountChanged("10");
 
-        verify(view, atLeastOnce()).showCalculatedValue(String.valueOf(calculateCourse()));
+        verify(view, atLeastOnce()).showCalculatedValue(String.valueOf(calculateCourse(fromCurrencyPosition, toCurrencyPosition, 10)));
     }
 
-    private double calculateCourse() {
-        Currency from = TestCurrencies.getCurrencies().get(1);
-        Currency to = TestCurrencies.getCurrencies().get(2);
+    private String calculateCourse(int fromPosition, int toPosition, double amount) {
+        Currency from = TestCurrencies.getCurrencies().get(fromPosition);
+        Currency to = TestCurrencies.getCurrencies().get(toPosition);
         double fromValue = from.getValue() * from.getNominal();
         double toValue = to.getValue() * to.getNominal();
-        double course = fromValue / toValue;
-        return course;
+        double course = fromValue / toValue * amount;
+        BigDecimal bigValue = new BigDecimal(course).setScale(4, RoundingMode.HALF_UP);
+        return bigValue.toEngineeringString();
     }
 }

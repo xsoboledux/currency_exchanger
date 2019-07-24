@@ -7,7 +7,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,12 +35,20 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
     private EditText topCurrencyEditText;
     private Spinner topCurrencySpinner;
     private Spinner bottomCurrencySpinner;
+    private RelativeLayout contentView;
+    private LinearLayout emptyView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_currency);
 
+        initViews();
+        presenter = DependencyInjection.currencyPresenter(getApplicationContext(), this);
+        presenter.onAttach();
+    }
+
+    private void initViews() {
         topCurrencyEditText = findViewById(R.id.top_currency_edit_text);
         topCurrencyEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -56,6 +66,10 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
 
             }
         });
+        contentView = findViewById(R.id.content_view);
+        contentView.setVisibility(View.VISIBLE);
+        emptyView = findViewById(R.id.empty_view);
+        emptyView.setVisibility(View.GONE);
         bottomCurrencyText = findViewById(R.id.bottom_currency_text);
         courseText = findViewById(R.id.course_value);
         topCurrenciesAdapter = new ArrayAdapter<>(this, R.layout.currency_dropdown_menu_item);
@@ -65,7 +79,7 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
         topCurrencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-                presenter.onTopCurrencySelected(pos);
+                presenter.onFromCurrencySelected(pos);
             }
 
             @Override
@@ -81,7 +95,7 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
         bottomCurrencySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-                presenter.onBottomCurrencySelected(pos);
+                presenter.onToCurrencySelected(pos);
             }
 
             @Override
@@ -91,8 +105,6 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
         });
 
         progressBar = findViewById(R.id.progress);
-        presenter = DependencyInjection.currencyPresenter(getApplicationContext(), this);
-        presenter.onAttach();
     }
 
     @Override
@@ -117,7 +129,8 @@ public class CurrencyActivity extends AppCompatActivity implements CurrencyMvpVi
 
     @Override
     public void showEmptyCurrencies() {
-
+        emptyView.setVisibility(View.VISIBLE);
+        contentView.setVisibility(View.GONE);
     }
 
     @Override

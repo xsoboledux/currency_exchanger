@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.Executor;
 
+import ru.xsobolx.currencyexchange.domain.CurrencyExchanger;
 import ru.xsobolx.currencyexchange.domain.GetCurrencies;
 import ru.xsobolx.currencyexchange.network.HttpClient;
 import ru.xsobolx.currencyexchange.network.XmlParser;
@@ -47,6 +48,6 @@ public class DependencyInjection {
     }
 
     public static CurrencyPresenter currencyPresenter(@NonNull Context context, CurrencyMvpView mvpView) {
-        return new CurrencyPresenter(getCurrencies(context), mvpView);
+        return new CurrencyPresenter(getCurrencies(context), new CurrencyExchanger(), mvpView);
     }
 }
